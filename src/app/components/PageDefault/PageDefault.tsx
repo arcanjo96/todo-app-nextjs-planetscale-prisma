@@ -1,46 +1,24 @@
 'use client'
 
-import { useState } from "react";
-
-
-// export const metadata = {
-//   title: 'Test lucas'
-// };
-
-// function makeQueryClient() {
-//   const fetchMap = new Map<string, Promise<any>>();
-//   return function queryClient<QueryResult>(name: string, query: () => Promise<QueryResult>): Promise<QueryResult> {
-//     if (!fetchMap.has(name)) {
-//       fetchMap.set(name, query());
-//     }
-//     return fetchMap.get(name)!;
-//   }
-// }
-
-// const queryClient = makeQueryClient();
-
-// async function fetchTodos() {
-//   const response = await fetch('http://localhost:3000/api/todos');
-//   return response.json();
-// }
-
-// const fetchTodosPromise = fetchTodos();
-
+import { useEffect, useState } from "react";
 
 export default function Home() {
   const [description, setDescription] = useState('');
   const [todos, setTodos] = useState([]);
 
+  useEffect(() => {
+    fetchTodos();
+  }, []);
+
 
   async function fetchTodos() {
-    const res = await fetch('http://localhost:3000/api/todos');
+    const res = await fetch('/api/todos');
     const data = await res.json();
     setTodos(data);
   }
-  fetchTodos();
 
   async function handleSubmit() {
-    await fetch('http://localhost:3000/api/todos', {
+    await fetch('/api/todos', {
       method: 'POST',
       body: JSON.stringify({
         description
@@ -48,6 +26,13 @@ export default function Home() {
     });
 
     await fetchTodos();
+    setDescription('');
+  }
+
+  async function handleRemove(id: string) {
+    await fetch(`/api/todos/${id}`, {
+      method: 'DELETE',
+    });
   }
 
   return (
@@ -60,6 +45,7 @@ export default function Home() {
               className="w-80 border-b-2 border-gray-500 text-black"
               type="text" placeholder="Enter your task here"
               onChange={(event) => setDescription(event.currentTarget.value)}
+              value={description}
             />
             <button
               className="ml-2 border-2 border-green-500 p-2 text-green-500 hover:text-white hover:bg-green-500 rounded-lg flex"
@@ -83,7 +69,9 @@ export default function Home() {
                       <p className={`text-lg text-black ${todo.done && 'line-through'}`}>{todo.description}</p>
                     </div>
                     <button
-                      className="ml-2 border-2 border-red-500 p-2 text-red-500 hover:text-white hover:bg-red-500 rounded-lg flex">
+                      className="ml-2 border-2 border-red-500 p-2 text-red-500 hover:text-white hover:bg-red-500 rounded-lg flex"
+                      onClick={() => handleRemove(todo.id)}
+                      >
                       <span>Remove</span>
                     </button>
                   </div>

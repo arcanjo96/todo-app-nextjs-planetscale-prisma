@@ -13,3 +13,11 @@ export async function POST(request: Request) {
 
   return new Response();
 }
+
+export async function DELETE(request: Request) {
+  console.log({
+    request
+  });
+
+  return new Response();
+}
