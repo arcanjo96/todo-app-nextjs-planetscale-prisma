@@ -1,10 +1,12 @@
 'use client'
 
 import { useEffect, useState } from "react";
+import { SkeletonCard } from "../SkeletonCard";
 
 export default function Home() {
   const [description, setDescription] = useState('');
   const [todos, setTodos] = useState([]);
+  const [loading, setLoading] = useState(false);
 
   useEffect(() => {
     fetchTodos();
@@ -12,9 +14,11 @@ export default function Home() {
 
 
   async function fetchTodos() {
+    setLoading(true);
     const res = await fetch('/api/todos');
     const data = await res.json();
     setTodos(data);
+    setLoading(false);
   }
 
   async function handleSubmit() {
@@ -33,11 +37,39 @@ export default function Home() {
     await fetch(`/api/todos/${id}`, {
       method: 'DELETE',
     });
+
+    await fetchTodos();
+  }
+
+  async function handleUpdate(id: string, data: any) {
+    await fetch(`/api/todos/${id}`, {
+      method: 'PUT',
+      body: JSON.stringify(data)
+    });
+
+    await fetchTodos();
+  }
+
+  async function handleReset() {
+    await fetch(`/api/todos/reset`, {
+      method: 'POST',
+    });
+
+    await fetchTodos();
+  }
+
+  async function handleClearCompletedTasks() {
+    await fetch(`/api/todos/clear`, {
+      method: 'POST',
+    });
+
+    await fetchTodos();
   }
 
   return (
     <div className="w-full h-screen bg-gray-100 pt-8">
       <div className="bg-white p-3 max-w-md mx-auto">
+        {/* <Alert type="error" /> */}
         <div className="text-center">
           <h1 className="text-3xl font-bold">ToDo App</h1>
           <div className="mt-4 flex">
@@ -58,20 +90,24 @@ export default function Home() {
         </div>
         <div className="mt-8">
           <ul>
-            {todos.map((todo: any) => {
+            {loading ? Array(todos.length || 1).fill(0).map((_, index) => <SkeletonCard key={index} />) : todos.map((todo: any) => {
               return (
                 <li className="p-2 rounded-lg" key={todo.id} >
                   <div className="flex align-middle flex-row justify-between">
                     <div className="p-2">
-                      <input type="checkbox" className="h-6 w-6" value={todo.done} checked={todo.done} readOnly />
+                      <input type="checkbox" className="h-6 w-6" defaultChecked={!!todo.done} onChange={(event) => {
+                        handleUpdate(todo.id, {
+                          done: !!event.currentTarget.checked
+                        });
+                      }} />
                     </div>
-                    <div className="p-2">
-                      <p className={`text-lg text-black ${todo.done && 'line-through'}`}>{todo.description}</p>
+                    <div className="p-2 overflow-hidden whitespace-nowrap">
+                      <p className={`truncate text-lg text-black ${(todo.done || todo.checked) && 'line-through'}`}>{todo.description}</p>
                     </div>
                     <button
                       className="ml-2 border-2 border-red-500 p-2 text-red-500 hover:text-white hover:bg-red-500 rounded-lg flex"
                       onClick={() => handleRemove(todo.id)}
-                      >
+                    >
                       <span>Remove</span>
                     </button>
                   </div>
@@ -84,9 +120,11 @@ export default function Home() {
         <div className="mt-8">
           <button
             className="border-2 border-red-500 p-2 text-red-500"
-          >Clear Completed Task</button>
+            onClick={() => handleClearCompletedTasks()}
+          >Clear Completed Tasks</button>
           <button
             className="border-2 border-indigo-500 p-2 text-indigo-500 ml-4"
+            onClick={() => handleReset()}
           >Reset Todo List</button>
         </div>
       </div>
